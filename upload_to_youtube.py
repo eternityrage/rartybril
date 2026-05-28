@@ -96,27 +96,24 @@ def main():
         print("[youtube] ❌ No video found at output/final_video.mp4")
         return
     
-    # Read the story and topic for title
+    # Read topic and stories for bilingual content
+    topic_file = Path('output/topic.txt')
     story_file = Path('output/story.txt')
-    topic = ""
+    story_en_file = Path('output/story_en.txt')
     
-    if story_file.exists():
-        story = story_file.read_text(encoding='utf-8')
-        
-        # Extract key phrase from first sentence for title
-        first_sentence = story.split('.')[0] if '.' in story else story[:80]
-        
-        # Create short, catchy title (max 60 chars for mobile)
-        title = first_sentence[:57] + "..." if len(first_sentence) > 60 else first_sentence
-    else:
-        title = "Ιστορία των Γυναικών στην Αρχαιότητα"
+    topic = topic_file.read_text(encoding='utf-8').strip() if topic_file.exists() else ""
+    story = story_file.read_text(encoding='utf-8').strip() if story_file.exists() else ""
+    story_en = story_en_file.read_text(encoding='utf-8').strip() if story_en_file.exists() else ""
     
-    # NO description for Shorts (as requested)
-    description = "#Shorts #ΙστορίαΓυναικών #ΑρχαίαΙστορία"
+    title = topic[:60] if topic else story[:60] if story else "Ιστορία των γυναικών στην αρχαιότητα"
+    
+    desc_gr = story[:150] if len(story) > 150 else story
+    desc_en = story_en[:150] if len(story_en) > 150 else story_en
+    description = f"{desc_gr}\n\n---\n{desc_en}\n\n#ιστορίαγυναικών #αρχαίαιστορία #εκπαίδευση #shorts"
     
     tags = [
-        'Ιστορία', 'Αρχαίες Γυναίκες', 'Ιστορικά Γεγονότα',
-        'Shorts', 'AI', 'Εκπαίδευση', 'Αρχαίος Κόσμος'
+        'ιστορία', 'αρχαίες γυναίκες', 'ιστορικά γεγονότα',
+        'shorts', 'εκπαίδευση', 'αρχαιότητα'
     ]
     
     # Upload

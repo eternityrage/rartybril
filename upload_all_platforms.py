@@ -43,31 +43,40 @@ def main():
     print(f"[upload] ✅ Video file found: {video_file}")
     print(f"[upload] Video size: {file_size_mb:.2f} MB")
 
-    # Read story for metadata
+    # Read topic and stories for bilingual metadata
+    topic_file = Path('output/topic.txt')
     story_file = Path('output/story.txt')
-    if story_file.exists():
-        story = story_file.read_text(encoding='utf-8')
-        # Use first sentence as title
-        title_parts = story.split('.')
-        title = title_parts[0][:100] if title_parts else "Ιστορία των Γυναικών στην Αρχαιότητα"
-    else:
-        title = f"Ιστορία των Γυναικών στην Αρχαιότητα - {datetime.date.today()}"
+    story_en_file = Path('output/story_en.txt')
 
-    # Platform-specific content
+    topic = topic_file.read_text(encoding='utf-8').strip() if topic_file.exists() else ""
+    story = story_file.read_text(encoding='utf-8').strip() if story_file.exists() else ""
+    story_en = story_en_file.read_text(encoding='utf-8').strip() if story_en_file.exists() else ""
+
+    title_gr = topic[:100] if topic else "Ιστορία των Γυναικών στην Αρχαιότητα"
+    title_en = story_en[:100] if story_en else "Ancient Women's History"
+
+    # Lowercase Greek hashtags
+    hashtags = '#ιστορίαγυναικών #αρχαίαιστορία #εκπαίδευση'
+
+    desc_base_gr = story[:150] if len(story) > 150 else story
+    desc_base_en = story_en[:150] if len(story_en) > 150 else story_en
+
     descriptions = {
-        'youtube': f"{story[:150] if len(story) > 150 else story} #ΚορίτσιΤύπου #Ψυχολογία #Εμπνευσμός #Στοιχεία #Shorts",
-        'instagram': f"{story[:2200] if len(story) > 2200 else story}\n\n#ΚορίτσιΤύπου #Ψυχολογία #Εμπνευσμός #Στοιχεία #Shorts #Reels",
-        'tiktok': f"{story[:2200] if len(story) > 2200 else story} #ΚορίτσιΤύπου #Ψυχολογία #Εμπνευσμός #Στοιχεία #FYP",
-        'facebook': f"{story[:63206] if len(story) > 63206 else story}\n\n#ΚορίτσιΤύπου #Ψυχολογία #Εμπνευσμός #Στοιχεία",
-        'threads': f"{story[:500] if len(story) > 500 else story} #ΚορίτσιΤύπου #Ψυχολογία #Εμπνευσμός #Στοιχεία",
-        'twitter': f"{story[:280] if len(story) > 280 else story} #ΚορίτσιΤύπου #Ψυχολογία #Εμπνευσμός",
-        'vk': f"{story[:220] if len(story) > 220 else story}\n\n#ΚορίτσιΤύπου #Ψυχολογία #Εμπνευσμός #Στοιχεία"
+        'youtube': f"{desc_base_gr}\n\n---\n{desc_base_en}\n\n{hashtags}",
+        'instagram': f"{story[:1800] if len(story) > 1800 else story}\n\n---\n{story_en[:300] if len(story_en) > 300 else story_en}\n\n{hashtags} #shorts #reels",
+        'tiktok': f"{desc_base_gr}\n\n---\n{desc_base_en}\n\n{hashtags} #fyp",
+        'facebook': f"{story[:63000] if len(story) > 63000 else story}\n\n---\n{story_en[:1000] if len(story_en) > 1000 else story_en}\n\n{hashtags}",
+        'threads': f"{desc_base_gr}\n\n---\n{desc_base_en}\n\n{hashtags}",
+        'twitter': f"{desc_base_gr[:120]}\n\n{desc_base_en[:100]}\n\n{hashtags} #ιστορία",
+        'vk': f"{story[:220] if len(story) > 220 else story}\n\n{hashtags}"
     }
 
     tags = [
-        'Ψυχολογία', 'Εμπνευσμός', 'Γυναικεία Στοιχεία',
-        'Shorts', 'Reels', 'Εκπαίδευση', 'Αυτοβελτίωση'
+        'ιστορία', 'αρχαίες γυναίκες', 'ιστορικά γεγονότα',
+        'shorts', 'reels', 'εκπαίδευση', 'αρχαιότητα'
     ]
+
+    youtube_title = title_gr
 
     results = {}
 
@@ -81,7 +90,7 @@ def main():
         print("📺 UPLOADING TO YOUTUBE...")
         print("="*60)
         try:
-            result = upload_to_youtube(video_file, title, descriptions['youtube'], tags)
+            result = upload_to_youtube(video_file, youtube_title, descriptions['youtube'], tags)
             results['youtube'] = result
             print(f"✅ YouTube: https://youtube.com/shorts/{result['id']}")
         except Exception as e:
@@ -114,7 +123,7 @@ def main():
         print("🎵 UPLOADING TO TIKTOK...")
         print("="*60)
         try:
-            result = upload_to_tiktok(video_file, title, descriptions['tiktok'])
+            result = upload_to_tiktok(video_file, title_en, descriptions['tiktok'])
             results['tiktok'] = result
             print(f"✅ TikTok: Video ID {result.get('id', 'unknown')}")
         except Exception as e:
@@ -188,7 +197,7 @@ def main():
         print("🇷🇺 UPLOADING TO VK...")
         print("="*60)
         try:
-            result = upload_to_vk(str(video_file), descriptions['vk'], title)
+            result = upload_to_vk(str(video_file), descriptions['vk'], title_en)
             results['vk'] = result
             print(f"✅ VK: Post ID {result.get('post_id', 'unknown')}")
         except Exception as e:

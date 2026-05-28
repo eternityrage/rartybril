@@ -209,12 +209,21 @@ def main():
         print(f"[instagram] ❌ Video not found: {video_file}")
         return
 
-    # Read story for caption
+    # Read topic and stories for bilingual caption
+    topic_file = Path('output/topic.txt')
     story_file = Path('output/story.txt')
-    if story_file.exists():
-        caption = story_file.read_text(encoding='utf-8')[:2200]  # Instagram caption limit
+    story_en_file = Path('output/story_en.txt')
+
+    topic = topic_file.read_text(encoding='utf-8').strip() if topic_file.exists() else ""
+    story = story_file.read_text(encoding='utf-8').strip() if story_file.exists() else ""
+    story_en = story_en_file.read_text(encoding='utf-8').strip() if story_en_file.exists() else ""
+
+    hashtags = "#ιστορίαγυναικών #αρχαίαιστορία #εκπαίδευση #shorts #reels"
+    desc_en = story_en[:300] if len(story_en) > 300 else story_en
+    if story:
+        caption = f"{story[:1800] if len(story) > 1800 else story}\n\n---\n{desc_en}\n\n{hashtags}"
     else:
-        caption = "История древних женщин 🏛️ #Shorts #История #Женщины"
+        caption = f"{topic}\n\n{hashtags}" if topic else f"Ιστορία των γυναικών στην αρχαιότητα\n\n{hashtags}"
 
     try:
         result = upload_to_instagram(str(video_file), caption)

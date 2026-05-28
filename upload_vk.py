@@ -49,11 +49,11 @@ def upload_to_vk(video_path, description="", title=""):
         upload = vk_api.VkUpload(vk_session)
         
         # Prepare message
-        message = description if description else "🏛️ Η ιστορία των αρχαίων γυναικών!\n\n#ΙστορίαΓυναικών #ΓυναίκεςΣτηνΙστορία #Εκπαίδευση #Πολιτισμός"
+        message = description if description else "Ιστορία των γυναικών στην αρχαιότητα"
 
         # Ensure message is not empty (VK requirement)
         if not message.strip():
-            message = "🏛️ Νέο βίντεο!"
+            message = "Ιστορία των γυναικών στην αρχαιότητα"
         
         # Upload video to community
         print("\n📤 Uploading video to VK...")
@@ -62,7 +62,7 @@ def upload_to_vk(video_path, description="", title=""):
         # vk_api handles everything: getting upload URL, uploading file, and saving
         video = upload.video(
             video_file=str(video_path),
-            name=title or 'Η ιστορία των αρχαίων γυναικών',
+            name=title or 'Ιστορία των γυναικών στην αρχαιότητα',
             description=description[:220] if description else '',  # VK 220 char limit
             group_id=group_id_int,
             wallpost=0  # Don't auto-post, we'll do it manually
@@ -126,15 +126,22 @@ def upload_to_vk(video_path, description="", title=""):
 
 def main():
     """Test VK upload"""
-    import sys
-    
-    if len(sys.argv) < 2:
-        print("Usage: python upload_vk.py <video_path> [description] [title]")
-        sys.exit(1)
-    
-    video_path = sys.argv[1]
-    description = sys.argv[2] if len(sys.argv) > 2 else "Η ιστορία των αρχαίων γυναικών! 🏛️"
-    title = sys.argv[3] if len(sys.argv) > 3 else "Η ιστορία των αρχαίων γυναικών"
+    # Read topic and stories for bilingual metadata
+    topic_file = Path('output/topic.txt')
+    story_file = Path('output/story.txt')
+    story_en_file = Path('output/story_en.txt')
+
+    topic = topic_file.read_text(encoding='utf-8').strip() if topic_file.exists() else ""
+    story = story_file.read_text(encoding='utf-8').strip() if story_file.exists() else ""
+    story_en = story_en_file.read_text(encoding='utf-8').strip() if story_en_file.exists() else ""
+
+    video_path = "output/final_video.mp4"
+
+    hashtags = "#ιστορίαγυναικών #αρχαίαιστορία #εκπαίδευση"
+    title = topic[:100] if topic else "Ιστορία των γυναικών στην αρχαιότητα"
+    desc_gr = story[:150] if len(story) > 150 else story
+    desc_en = story_en[:50] if len(story_en) > 50 else story_en
+    description = f"{desc_gr}\n\n{desc_en}\n\n{hashtags}" if story else f"{topic}\n\n{hashtags}"
     
     try:
         result = upload_to_vk(video_path, description, title)
@@ -142,7 +149,6 @@ def main():
         print(f"Post URL: {result['post_url']}")
     except Exception as e:
         print(f"\n❌ Error: {e}")
-        sys.exit(1)
 
 
 if __name__ == "__main__":

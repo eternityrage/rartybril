@@ -23,6 +23,9 @@ POLLINATIONS_BASE_URL = "https://gen.pollinations.ai"
 STORY_MAX_WORDS = 130
 
 TOPICS_FILE = "topics.txt"
+USED_TOPICS_FILE = "used_topics.txt"
+MIN_TOPICS = 20
+TOPICS_TO_GENERATE = 100
 
 IMAGES_DIR = Path("images")
 OUTPUT_DIR = Path("output")
@@ -31,7 +34,9 @@ AUDIO_DIR = Path("audio")
 MUSIC_FILE = AUDIO_DIR / "music.mp3"
 
 NARRATION_FILE = OUTPUT_DIR / "narration.mp3"
+TOPIC_FILE = OUTPUT_DIR / "topic.txt"
 STORY_FILE = OUTPUT_DIR / "story.txt"
+STORY_EN_FILE = OUTPUT_DIR / "story_en.txt"
 SCENES_FILE = OUTPUT_DIR / "scenes.txt"
 SUBS_FILE = OUTPUT_DIR / "subtitles.ass"
 ANIMATED_VIDEO = OUTPUT_DIR / "animated.mp4"
@@ -50,28 +55,48 @@ def ensure_dirs():
     for f in IMAGES_DIR.glob("*.jpg"):
         f.unlink()
 
-def choose_topic_for_today():
-    """Pick the first topic from the list and remove it to prevent repetition."""
-    if not Path(TOPICS_FILE).exists():
-        return "Ιστορία των Γυναικών στην Αρχαιότητα"
-        
+def load_used_topics():
+    if not os.path.exists(USED_TOPICS_FILE):
+        return set()
+    with open(USED_TOPICS_FILE, "r", encoding="utf-8") as f:
+        return {line.strip() for line in f if line.strip()}
+
+def mark_topic_used(topic: str):
+    with open(USED_TOPICS_FILE, "a", encoding="utf-8") as f:
+        f.write(f"{topic}\n")
+
+def generate_new_topics(count: int):
+    print(f"[topics] Generating {count} new topics...")
+    try:
+        from generate_topics import generate_new_topics as _gen
+        new_topics = _gen(count)
+        with open(TOPICS_FILE, "a", encoding="utf-8") as f:
+            for t in new_topics:
+                f.write(f"{t}\n")
+        print(f"[topics] Added {len(new_topics)} new topics")
+    except Exception as e:
+        print(f"[topics] Failed to generate new topics: {e}")
+
+def choose_topic():
     with open(TOPICS_FILE, "r", encoding="utf-8") as f:
-        topics = [line.strip() for line in f if line.strip()]
-        
-    if not topics:
-        return "Ιστορία των Γυναικών στην Αρχαιότητα"
-        
-    # Take the first topic
-    chosen_topic = topics[0]
-    remaining_topics = topics[1:]
-    
-    # Save the remaining topics back to the file
-    with open(TOPICS_FILE, "w", encoding="utf-8") as f:
-        for t in remaining_topics:
-            f.write(t + "\n")
-            
-    print(f"[topics] Chosen topic: {chosen_topic}. Remaining: {len(remaining_topics)}")
-    return chosen_topic
+        all_topics = [line.strip() for line in f if line.strip()]
+
+    used = load_used_topics()
+    available = [t for t in all_topics if t not in used]
+
+    if len(available) < MIN_TOPICS:
+        print(f"[topics] Only {len(available)} unused topics left. Generating more...")
+        generate_new_topics(TOPICS_TO_GENERATE)
+        with open(TOPICS_FILE, "r", encoding="utf-8") as f:
+            all_topics = [line.strip() for line in f if line.strip()]
+        available = [t for t in all_topics if t not in used]
+
+    if not available:
+        raise RuntimeError("No unused topics available and generation failed")
+
+    topic = random.choice(available)
+    mark_topic_used(topic)
+    return topic
 
 def generate_story_with_pollinations(topic: str) -> str:
     """Generate a short Greek story about ancient women's history using paid Pollinations API."""
@@ -117,6 +142,47 @@ def generate_story_with_pollinations(topic: str) -> str:
         f.write(text)
 
     print(f"[story] Greek story generated ({len(text.split())} words)")
+    return text
+
+def generate_english_story(topic: str) -> str:
+    """Generate an English version of the story for bilingual posts."""
+    api_key = os.getenv("POLLINATIONS_API_KEY")
+    system = (
+        "You are a historian specialized in ancient women's history. "
+        "Write a short 30-second interesting story (80-130 words) in English. "
+        "Tell real historical facts, laws, customs, or traditions. "
+        "Use a lively, captivating style. No titles."
+    )
+    prompt = f"Topic: {topic}. Tell an interesting historical fact."
+
+    url = f"{POLLINATIONS_BASE_URL}/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "openai",
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.8
+    }
+
+    print(f"[story] Generating English story for topic: {topic}")
+    r = requests.post(url, headers=headers, json=payload, timeout=60)
+    r.raise_for_status()
+    response_json = r.json()
+    text = response_json['choices'][0]['message']['content'].strip()
+
+    words = text.split()
+    if len(words) > STORY_MAX_WORDS:
+        text = " ".join(words[:STORY_MAX_WORDS])
+
+    with open(STORY_EN_FILE, "w", encoding="utf-8") as f:
+        f.write(text)
+
+    print(f"[story] English story generated ({len(text.split())} words)")
     return text
 
 def generate_scene_descriptions(story: str) -> list:
@@ -501,13 +567,16 @@ def merge_audio():
 def main():
     ensure_dirs()
 
-    topic = choose_topic_for_today()
+    topic = choose_topic()
+    with open(TOPIC_FILE, "w", encoding="utf-8") as f:
+        f.write(topic)
     print("=" * 60)
     print(f"=== Topic: {topic}")
     print("=" * 60)
 
     # 1. Generate story with Pollinations AI
     story = generate_story_with_pollinations(topic)
+    story_en = generate_english_story(topic)
     
     # 2. Generate unique scene descriptions from the story
     scenes = generate_scene_descriptions(story)

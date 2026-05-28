@@ -211,12 +211,22 @@ def main():
         print(f"[threads] ❌ Video not found: {video_file}")
         return
 
-    # Read story for caption
+    # Read topic and stories for bilingual caption
+    topic_file = Path('output/topic.txt')
     story_file = Path('output/story.txt')
-    if story_file.exists():
-        caption = story_file.read_text(encoding='utf-8')[:500]  # Threads has character limit
+    story_en_file = Path('output/story_en.txt')
+
+    topic = topic_file.read_text(encoding='utf-8').strip() if topic_file.exists() else ""
+    story = story_file.read_text(encoding='utf-8').strip() if story_file.exists() else ""
+    story_en = story_en_file.read_text(encoding='utf-8').strip() if story_en_file.exists() else ""
+
+    hashtags = "#ιστορίαγυναικών #αρχαίαιστορία #εκπαίδευση"
+    desc_gr = story[:300] if len(story) > 300 else story
+    desc_en = story_en[:150] if len(story_en) > 150 else story_en
+    if story:
+        caption = f"{desc_gr}\n\n---\n{desc_en}\n\n{hashtags}"
     else:
-        caption = "Ιστορία αρχαίων γυναικών 🏛️"
+        caption = f"{topic}\n\n{hashtags}" if topic else f"Ιστορία των γυναικών στην αρχαιότητα\n\n{hashtags}"
 
     try:
         result = upload_to_threads(str(video_file), caption)

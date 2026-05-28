@@ -97,7 +97,7 @@ def upload_to_facebook(video_path, description):
             post_params = {
                 'access_token': access_token,
                 'description': description_limited,
-                'title': 'Ιστορία αρχαίων γυναικών',
+                'title': description_limited[:100],
                 'file_url': video_url,  # Use file_url instead of uploading file directly
                 'published': True
             }
@@ -161,12 +161,21 @@ def main():
         print(f"[facebook] ❌ Video not found: {video_file}")
         return
 
-    # Read story for description
+    # Read topic and stories for bilingual description
+    topic_file = Path('output/topic.txt')
     story_file = Path('output/story.txt')
-    if story_file.exists():
-        description = story_file.read_text(encoding='utf-8')[:63206]  # Facebook description limit
+    story_en_file = Path('output/story_en.txt')
+
+    topic = topic_file.read_text(encoding='utf-8').strip() if topic_file.exists() else ""
+    story = story_file.read_text(encoding='utf-8').strip() if story_file.exists() else ""
+    story_en = story_en_file.read_text(encoding='utf-8').strip() if story_en_file.exists() else ""
+
+    hashtags = "#ιστορίαγυναικών #αρχαίαιστορία #εκπαίδευση"
+    desc_en = story_en[:1000] if len(story_en) > 1000 else story_en
+    if story:
+        description = f"{story}\n\n---\n{desc_en}\n\n{hashtags}"
     else:
-        description = "Ιστορία αρχαίων γυναικών 🏛️ #ΚορίτσιΤύπου #Ψυχολογία #Εμπνευσμός #Στοιχεία #Eğitim"
+        description = f"{topic}\n\n{hashtags}" if topic else f"Ιστορία των γυναικών στην αρχαιότητα\n\n{hashtags}"
 
     try:
         result = upload_to_facebook(str(video_file), description)
