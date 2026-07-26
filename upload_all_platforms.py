@@ -34,6 +34,13 @@ for mod_name, func_name, key in modules:
 
 
 def get_latest_reel():
+    fv = Path("output/final_video.mp4")
+    if fv.exists():
+        meta = {}
+        for mf in [Path("output/story_en.txt"), Path("output/topic.txt")]:
+            if mf.exists():
+                with open(mf, encoding="utf-8") as f: meta["story"] = f.read()
+        return {"video_path": str(fv), "metadata": meta, "category": "Daily Story", "phrases": [], "words": [], "lang_field": "native"}
     video_dir = Path("output/video")
     if not video_dir.exists(): return None
     reels = list(video_dir.glob("*/final_reel.mp4"))
