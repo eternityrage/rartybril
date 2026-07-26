@@ -9,9 +9,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-upload_dir = Path(__file__).parent / "upload"
+root = Path(__file__).parent
+upload_dir = root / "upload"
 if upload_dir.exists() and str(upload_dir) not in sys.path:
     sys.path.insert(0, str(upload_dir))
+if str(root) not in sys.path:
+    sys.path.insert(0, str(root))
 
 uploaders = {}
 modules = [
@@ -25,12 +28,15 @@ modules = [
     ("upload_tiktok", "upload_to_tiktok", "tk"),
 ]
 for mod_name, func_name, key in modules:
-    try:
-        mod = __import__(mod_name, fromlist=[func_name])
-        uploaders[key] = getattr(mod, func_name)
-    except Exception as e:
-        print(f"[!] {mod_name} not available: {e}")
-        uploaders[key] = None
+    for prefix in ["upload.", ""]:
+        try:
+            mod = __import__(prefix + mod_name, fromlist=[func_name])
+            uploaders[key] = getattr(mod, func_name)
+            break
+        except ImportError:
+            continue
+    if not uploaders.get(key):
+        print(f"[!] {mod_name} not available")
 
 
 def get_latest_reel():
