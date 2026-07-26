@@ -36,11 +36,14 @@ for mod_name, func_name, key in modules:
 def get_latest_reel():
     fv = Path("output/final_video.mp4")
     if fv.exists():
-        meta = {}
-        for mf in [Path("output/story_en.txt"), Path("output/topic.txt")]:
-            if mf.exists():
-                with open(mf, encoding="utf-8") as f: meta["story"] = f.read()
-        return {"video_path": str(fv), "metadata": meta, "category": "Daily Story", "phrases": [], "words": [], "lang_field": "native"}
+        meta = {"story": "", "topic": ""}
+        se = Path("output/story_en.txt")
+        if se.exists():
+            with open(se, encoding="utf-8") as f: meta["story"] = f.read()
+        tp = Path("output/topic.txt")
+        if tp.exists():
+            with open(tp, encoding="utf-8") as f: meta["topic"] = f.read()
+        return {"video_path": str(fv), "metadata": meta, "category": meta.get("topic", "Daily Story"), "phrases": [], "words": [], "lang_field": "native"}
     video_dir = Path("output/video")
     if not video_dir.exists(): return None
     reels = list(video_dir.glob("*/final_reel.mp4"))
@@ -130,7 +133,15 @@ def get_language_name(phrases, lang_field):
     return lang_field.capitalize()
 
 
-def generate_caption(phrases, category, lang_field="native", words=None):
+def generate_caption(phrases, category, lang_field="native", words=None, metadata=None):
+    if metadata and metadata.get("story"):
+        story = metadata["story"]
+        topic = metadata.get("topic", "History")
+        tag = "ancienthistory"
+        base = [f"Ancient History: {topic}", "", story.strip(), ""]
+        base.extend(["Like & follow for daily history!", ""])
+        base.extend(["#" + tag, "#history", "#ancienthistory", "#greekhistory", "#womenshistory"])
+        return "\n".join(base)
     if words:
         channel = category
         tag = channel.lower().replace(" ", "")
@@ -223,7 +234,7 @@ def main():
     print("="*80)
     reel = get_latest_reel()
     if not reel: print("No reel found"); sys.exit(1)
-    caption = generate_caption(reel['phrases'], reel['category'], reel['lang_field'], reel.get('words'))
+    caption = generate_caption(reel['phrases'], reel['category'], reel['lang_field'], reel.get('words'), reel.get('metadata'))
     upload_to_all_platforms(reel['video_path'], caption, reel['category'], reel['phrases'], reel['lang_field'])
 
 if __name__ == "__main__": main()
