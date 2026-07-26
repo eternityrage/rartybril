@@ -106,3 +106,11 @@ jobs:
         git add topics.txt
         git commit -m "Auto-update topics: Rotating used topic [skip ci]" || echo "No changes to commit"
         git push
+
+    - name: Upload results artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: logs-${{ github.run_number }}
+        path: output/upload_results_*.json
+        retention-days: 7
