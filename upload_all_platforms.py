@@ -200,7 +200,7 @@ def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_fi
                     yt_title, yt_desc, yt_tags = generate_video_metadata(category, len(phrases) if phrases else 5, phrases)
                     r = func(video_path=video_path, title=yt_title, description=yt_desc, tags=yt_tags, category_id='22')
                 elif pname == "vk":
-                    r = func(video_path=video_path, description=caption, title=f"{lang_name}: {category}")
+                    r = func(video_path=video_path, description=caption)
                 elif pname == "telegram":
                     r = func(video_path=video_path, caption=caption)
                 elif pname == "twitter":
@@ -208,9 +208,9 @@ def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_fi
                 elif pname == "threads":
                     r = func(video_path=video_path, text=caption)
                 elif pname == "tiktok":
-                    r = func(video_path=video_path, description=caption)
+                    r = func(video_path=video_path, description=caption, title=caption[:100])
                 elif pname == "facebook":
-                    r = func(video_path=video_path, description=caption, title=f"{lang_name}: {category}")
+                    r = func(video_path=video_path, description=caption)
                 elif pname == "instagram":
                     r = func(video_path=video_path, caption=caption, is_story=False)
                 t_end = datetime.now()
