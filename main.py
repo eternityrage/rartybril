@@ -224,11 +224,9 @@ def generate_scene_descriptions(story: str) -> list:
     return unique_scenes
 
 def generate_image(scene: str, idx: int) -> Path:
-    """Generate a unique image for each scene using Pollinations AI."""
-    # Create unique seed for each image based on scene content + index
+    """Generate a unique image using FREE HuggingFace Inference API (Flux)."""
     seed = hash(scene + str(idx)) % 1000000
     
-    # Build high-quality photorealistic prompt focusing on beautiful ancient women
     prompt = (
         f"stunningly beautiful and photorealistic woman from ancient civilization, {scene}, "
         f"extreme close-up portrait, mathematically perfect facial features, "
@@ -239,33 +237,32 @@ def generate_image(scene: str, idx: int) -> Path:
         f"historically inspired elegance, museum-level details, "
         f"highly detailed face and hair, professional color grading"
     )
-    safe_prompt = quote(prompt)
-    
-    # Build URL for paid image generation
-    url = f"{POLLINATIONS_BASE_URL}/image/{safe_prompt}"
-    api_key = os.getenv("POLLINATIONS_API_KEY")
-    headers = {"Authorization": f"Bearer {api_key}"}
-    params = {
-        "width": IMAGE_WIDTH,
-        "height": IMAGE_HEIGHT,
-        "model": IMAGE_MODEL,  # Use configured model (e.g., klein)
-        "seed": seed,
-        "nologo": True,  # Explicitly request no watermarks
-        "negative_prompt": "worst quality, blurry, watermark, logo, text, signature, branded content, inappropriate, revealing, suggestive, nude, sexual, violence, blood, gore, deformed, ugly, bad anatomy, bad proportions, distorted face, asymmetrical eyes"
-    }
 
     out = IMAGES_DIR / f"scene_{idx:02d}.jpg"
     print(f"[image] Generating image {idx+1}/{NUM_IMAGES}: {scene[:50]}...")
     
+    hf_token = os.getenv("HF_TOKEN")
+    if not hf_token:
+        raise ValueError("HF_TOKEN environment variable required for free HuggingFace image generation")
     
-    # Retry logic with exponential backoff (longer waits for rate limits)
+    url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+    headers = {"Authorization": f"Bearer {hf_token}"}
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "width": IMAGE_WIDTH,
+            "height": IMAGE_HEIGHT,
+            "negative_prompt": "worst quality, blurry, watermark, logo, text, signature, branded content, inappropriate, revealing, suggestive, nude, sexual, violence, blood, gore, deformed, ugly, bad anatomy, bad proportions, distorted face, asymmetrical eyes"
+        }
+    }
+
     max_retries = 5
     for attempt in range(max_retries):
         try:
-            r = requests.get(url, headers=headers, params=params, timeout=180)
+            r = requests.post(url, headers=headers, json=payload, timeout=180)
             r.raise_for_status()
             out.write_bytes(r.content)
-            time.sleep(2)  # Small delay between successful requests
+            time.sleep(2)
             return out
         except requests.exceptions.HTTPError as e:
             # Handle 429 rate limits with much longer waits
