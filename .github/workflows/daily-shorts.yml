@@ -2,9 +2,7 @@ name: Daily Auto Shorts with Multi-Platform Upload
 
 on:
   schedule:
-    - cron: "30 4 * * *"     # 10:00 AM IST  (4:30 UTC)
-    - cron: "30 12 * * *"    # 6:00 PM IST   (12:30 UTC)
-    - cron: "30 20 * * *"    # 2:00 AM IST   (20:30 UTC)
+    - cron: "30 4 * * *"     # 10:00 AM IST  (4:30 UTC) - Once daily
   workflow_dispatch:
 
 permissions:
@@ -106,6 +104,14 @@ jobs:
         git add topics.txt
         git commit -m "Auto-update topics: Rotating used topic [skip ci]" || echo "No changes to commit"
         git push
+
+    - name: Upload images artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-images-${{ github.run_number }}
+        path: images/*.jpg
+        retention-days: 30
 
     - name: Upload results artifact
       if: always()
