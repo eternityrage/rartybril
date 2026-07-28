@@ -19,44 +19,25 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def generate_new_topics(count=100):
-    """Generate new Greek topics about ancient women using paid Pollinations API with retry logic."""
+    """Generate new Greek topics using FREE HuggingFace API."""
     
-    api_key = os.getenv("POLLINATIONS_API_KEY")
-    if not api_key:
-        raise ValueError("POLLINATIONS_API_KEY environment variable is required for paid API")
+    hf_token = os.getenv("HF_TOKEN")
+    if not hf_token:
+        raise ValueError("HF_TOKEN environment variable required")
     
-    system = (
-        "Είσαι ιστορικός που ειδικεύεται στην ιστορία των γυναικών στους αρχαίους πολιτισμούς. "
-        f"Δημιούργησε μια λίστα με {count} μοναδικά θέματα στα ελληνικά. "
-        "Κάθε θέμα πρέπει να είναι σύντομο (5-10 λέξεις), ενδιαφέρον και εκπαιδευτικό. "
-        "Τα θέματα πρέπει να καλύπτουν: νόμους, έθιμα, διάσημες γυναίκες, επαγγέλματα, θρησκεία, πολιτισμό, τέχνη. "
-        "Παράγει ΜΟΝΟ τα θέματα, ένα ανά γραμμή, χωρίς αριθμούς ή δείκτες."
-    )
+    system = "Είσαι ιστορικός που ειδικεύεται στην ιστορία των γυναικών στους αρχαίους πολιτισμούς."
+    prompt = f"Δημιούργησε {count} μοναδικά θέματα στα ελληνικά για γυναίκες σε αρχαίους πολιτισμούς. Κάθε θέμα σύντομο (5-10 λέξεις). Παράγει ΜΟΝΟ τα θέματα, ένα ανά γραμμή."
     
-    prompt = f"Δημιούργησε {count} μοναδικά θέματα για γυναίκες σε αρχαίους πολιτισμούς"
-    
-    # Using the standardized chat completion endpoint for paid API
-    url = "https://gen.pollinations.ai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": "openai",
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.8
-    }
+    url = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
+    headers = {"Authorization": f"Bearer {hf_token}"}
+    payload = {"inputs": f"{system}\n\n{prompt}", "parameters": {"max_new_tokens": 500, "temperature": 0.8}}
     
     print(f"[topics] Generating {count} new Greek topics...")
     
-    # Retry logic with exponential backoff
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            r = requests.post(url, headers=headers, json=payload, timeout=120)
+            r = requests.post(url, headers=headers, json=payload, timeout=180)
             r.raise_for_status()
             
             # Parse topics
