@@ -108,7 +108,7 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git add topics.txt used_topics.txt images/used_images.json
+        git add topics.txt used_topics.txt used_images.json 2>/dev/null || true
         git commit -m "Auto-update topics and image tracking [skip ci]" || echo "No changes to commit"
         git push
 
