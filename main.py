@@ -219,18 +219,22 @@ def download_image_from_drive(idx: int) -> Path:
     
     # Track used images
     used_log = Path("used_images.json")
-    used = set()
+    usage = {}
     if used_log.exists():
-        used = set(json.loads(used_log.read_text()))
+        usage = json.loads(used_log.read_text())
     
-    available = [f for f in all_files if f["name"] not in used]
-    if not available:
-        available = all_files  # Reset if all used
-        used = set()
+    # Count times each image was used; unused images have weight = 1
+    for f in all_files:
+        name = f["name"]
+        if name not in usage:
+            usage[name] = 0
     
-    chosen = random.choice(available)
-    used.add(chosen["name"])
-    used_log.write_text(json.dumps(list(used)))
+    # Weighted selection: less-used images get higher weight
+    min_usage = min(usage.values())
+    weights = [1.0 / (usage[f["name"]] - min_usage + 1) for f in all_files]
+    chosen = random.choices(all_files, weights=weights, k=1)[0]
+    usage[chosen["name"]] = usage.get(chosen["name"], 0) + 1
+    used_log.write_text(json.dumps(usage, indent=2))
     
     print(f"[image] Downloading {chosen['name']} from Drive...", flush=True)
     request = service.files().get_media(fileId=chosen["id"])
