@@ -46,7 +46,6 @@ jobs:
       run: |
         cat > .env << EOF
         POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY }}
-        HF_TOKEN=${{ secrets.HF_TOKEN }}
         GOOGLE_SERVICE_ACCOUNT_KEY=${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
         GOOGLE_DRIVE_FOLDER_ID=${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         YT_CLIENT_ID=${{ secrets.YT_CLIENT_ID }}
