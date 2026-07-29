@@ -97,7 +97,7 @@ LANGUAGE_MAP = {
     "ice": "Icelandic", "icelandic": "Icelandic",
     "tha": "Thai", "thai": "Thai",
     "tel": "Telugu", "telugu": "Telugu",
-    "fny": "Fanny", "french": "French",
+    "fny": "Greek", "french": "French",
     "tur": "Turkish", "turkish": "Turkish",
     "ukr": "Ukrainian", "ukrainian": "Ukrainian",
     "pol": "Polish", "polish": "Polish",

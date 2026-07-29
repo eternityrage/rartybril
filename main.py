@@ -218,7 +218,7 @@ def download_image_from_drive(idx: int) -> Path:
             break
     
     # Track used images
-    used_log = IMAGES_DIR / "used_images.json"
+    used_log = Path("used_images.json")
     used = set()
     if used_log.exists():
         used = set(json.loads(used_log.read_text()))
@@ -304,8 +304,9 @@ def generate_word_subtitles():
         print("[subs] Model downloaded!")
     
     # Convert MP3 to WAV for Vosk
-    wav_file = "output/narration.wav"
-    os.system(f'ffmpeg -y -i {NARRATION_FILE} -ar 16000 -ac 1 {wav_file}')
+    wav_file = str(OUTPUT_DIR / "narration.wav")
+    subprocess.run(["ffmpeg", "-y", "-i", str(NARRATION_FILE), "-ar", "16000", "-ac", "1", wav_file],
+                   capture_output=True, check=True)
     
     # Load Vosk model
     model = Model(model_path)
