@@ -24,8 +24,8 @@ STORY_MAX_WORDS = 130
 
 TOPICS_FILE = "topics.txt"
 USED_TOPICS_FILE = "used_topics.txt"
-MIN_TOPICS = 20
-TOPICS_TO_GENERATE = 100
+MIN_TOPICS = 100
+TOPICS_TO_GENERATE = 200
 
 IMAGES_DIR = Path("images")
 OUTPUT_DIR = Path("output")
