@@ -106,8 +106,8 @@ def generate_story_with_pollinations(topic: str) -> str:
     
     url = "https://gen.pollinations.ai/v1/chat/completions"
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    system = "Είσαι μια ιστορικός που ειδικεύεται στην αρχαία γυναικεία ιστορία. Γράψε μια σύντομη 30-δευτερόλεπτη ενδιαφέρουσα ιστορία (80-130 λέξεις) στα ελληνικά. Αφηγήσου πραγματικά ιστορικά γεγονότα, νόμους, έθιμα ή παραδόσεις. Χρησιμοποίησε ζωντανό, συναρπαστικό ύφος. Χωρίς τίτλους."
-    prompt = f"Θέμα: {topic}. Αφηγήσου μια ενδιαφέρουσα ιστορική πληροφορία."
+    system = "You are a historian specializing in ancient women's history. Write a short 30-second interesting story (80-130 words) in Greek. Tell real historical facts, laws, customs, or traditions. Use a lively, captivating style. No titles."
+    prompt = f"Theme: {topic}. Tell an interesting historical fact in Greek."
     payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating Greek story for topic: {topic}")
@@ -548,7 +548,7 @@ def main():
     # 4. Generate narration with TTS
     generate_tts(story)
     
-    # 5. Generate word-level UPPERCASE subtitles with Whisper
+    # 5. Generate word-level UPPERCASE subtitles with Vosk
     generate_word_subtitles()
     
     # 6. Create animated slideshow with Ken Burns effect
