@@ -98,42 +98,51 @@ def choose_topic():
     mark_topic_used(topic)
     return topic
 
-def generate_text_hf(prompt: str, system: str, max_words: int = 130) -> str:
-    """Generate text using FREE HuggingFace Inference API."""
-    hf_token = os.getenv("HF_TOKEN")
-    if not hf_token:
-        raise ValueError("HF_TOKEN environment variable required")
-    
-    url = "https://api-inference.huggingface.co/models/HuggingFaceH4/zephyr-7b-beta"
-    headers = {"Authorization": f"Bearer {hf_token}"}
-    payload = {"inputs": f"{system}\n\n{prompt}", "parameters": {"max_new_tokens": 200, "temperature": 0.8}}
-    
-    r = requests.post(url, headers=headers, json=payload, timeout=120)
-    r.raise_for_status()
-    text = r.json()[0]["generated_text"].strip()
-    
-    words = text.split()
-    if len(words) > max_words:
-        text = " ".join(words[:max_words])
-    return text
-
 def generate_story_with_pollinations(topic: str) -> str:
-    """Generate a short Greek story using FREE HuggingFace API."""
+    """Generate Greek story using Pollinations AI."""
+    api_key = os.getenv("POLLINATIONS_API_KEY")
+    if not api_key:
+        raise ValueError("POLLINATIONS_API_KEY required")
+    
+    url = "https://gen.pollinations.ai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system = "Είσαι μια ιστορικός που ειδικεύεται στην αρχαία γυναικεία ιστορία. Γράψε μια σύντομη 30-δευτερόλεπτη ενδιαφέρουσα ιστορία (80-130 λέξεις) στα ελληνικά. Αφηγήσου πραγματικά ιστορικά γεγονότα, νόμους, έθιμα ή παραδόσεις. Χρησιμοποίησε ζωντανό, συναρπαστικό ύφος. Χωρίς τίτλους."
     prompt = f"Θέμα: {topic}. Αφηγήσου μια ενδιαφέρουσα ιστορική πληροφορία."
+    payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
+    
     print(f"[story] Generating Greek story for topic: {topic}")
-    text = generate_text_hf(prompt, system, STORY_MAX_WORDS)
+    r = requests.post(url, headers=headers, json=payload, timeout=60)
+    r.raise_for_status()
+    text = r.json()["choices"][0]["message"]["content"].strip()
+    
+    words = text.split()
+    if len(words) > STORY_MAX_WORDS:
+        text = " ".join(words[:STORY_MAX_WORDS])
     with open(STORY_FILE, "w", encoding="utf-8") as f:
         f.write(text)
     print(f"[story] Greek story generated ({len(text.split())} words)")
     return text
 
 def generate_english_story(topic: str) -> str:
-    """Generate an English story using FREE HuggingFace API."""
+    """Generate English story using Pollinations AI."""
+    api_key = os.getenv("POLLINATIONS_API_KEY")
+    if not api_key:
+        raise ValueError("POLLINATIONS_API_KEY required")
+    
+    url = "https://gen.pollinations.ai/v1/chat/completions"
+    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system = "You are a historian specialized in ancient women's history. Write a short 30-second interesting story (80-130 words) in English. Tell real historical facts, laws, customs, or traditions. Use a lively, captivating style. No titles."
     prompt = f"Topic: {topic}. Tell an interesting historical fact."
+    payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
+    
     print(f"[story] Generating English story for topic: {topic}")
-    text = generate_text_hf(prompt, system, STORY_MAX_WORDS)
+    r = requests.post(url, headers=headers, json=payload, timeout=60)
+    r.raise_for_status()
+    text = r.json()["choices"][0]["message"]["content"].strip()
+    
+    words = text.split()
+    if len(words) > STORY_MAX_WORDS:
+        text = " ".join(words[:STORY_MAX_WORDS])
     with open(STORY_EN_FILE, "w", encoding="utf-8") as f:
         f.write(text)
     print(f"[story] English story generated ({len(text.split())} words)")
