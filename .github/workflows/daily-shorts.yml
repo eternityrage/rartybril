@@ -46,8 +46,6 @@ jobs:
       run: |
         cat > .env << EOF
         POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY }}
-        GOOGLE_SERVICE_ACCOUNT_KEY=${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-        GOOGLE_DRIVE_FOLDER_ID=${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         YT_CLIENT_ID=${{ secrets.YT_CLIENT_ID }}
         YT_CLIENT_SECRET=${{ secrets.YT_CLIENT_SECRET }}
         YT_REFRESH_TOKEN=${{ secrets.YT_REFRESH_TOKEN }}
@@ -71,6 +69,9 @@ jobs:
         python generate_topics.py
 
     - name: Generate daily short video
+      env:
+        GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+        GOOGLE_DRIVE_FOLDER_ID: ${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
       run: |
         python main.py
 
