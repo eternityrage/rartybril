@@ -177,74 +177,68 @@ def generate_scene_descriptions(story: str) -> list:
     print(f"[scenes] Created {len(unique_scenes)} unique scenes")
     return unique_scenes
 
-def generate_image(scene: str, idx: int) -> Path:
-    """Generate a unique image using FREE HuggingFace Inference API (Flux)."""
-    seed = hash(scene + str(idx)) % 1000000
+def download_image_from_drive(idx: int) -> Path:
+    """Download a random image from Google Drive folder (no repeats)."""
+    import json
+    from google.oauth2 import service_account
+    from googleapiclient.discovery import build
     
-    prompt = (
-        f"stunningly beautiful and photorealistic woman from ancient civilization, {scene}, "
-        f"extreme close-up portrait, mathematically perfect facial features, "
-        f"soulful expressive eyes, hyper-realistic skin texture, "
-        f"intricate traditional ancient jewelry and clothing with gold embroidery, "
-        f"cinematic lighting by a professional photographer, soft shadows, "
-        f"shot on 35mm lens, f/1.8, RAW photo, 8K UHD, lifelike, breathtaking beauty, "
-        f"historically inspired elegance, museum-level details, "
-        f"highly detailed face and hair, professional color grading"
-    )
-
     out = IMAGES_DIR / f"scene_{idx:02d}.jpg"
-    print(f"[image] Generating image {idx+1}/{NUM_IMAGES}: {scene[:50]}...")
     
-    hf_token = os.getenv("HF_TOKEN")
-    if not hf_token:
-        raise ValueError("HF_TOKEN environment variable required for free HuggingFace image generation")
+    service_key = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY")
+    folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "1WfXSfSYhQUZq3RJO7ZmJo2XfMUt1dHzl")
     
-    url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
-    headers = {"Authorization": f"Bearer {hf_token}"}
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "width": IMAGE_WIDTH,
-            "height": IMAGE_HEIGHT,
-            "negative_prompt": "worst quality, blurry, watermark, logo, text, signature, branded content, inappropriate, revealing, suggestive, nude, sexual, violence, blood, gore, deformed, ugly, bad anatomy, bad proportions, distorted face, asymmetrical eyes"
-        }
-    }
-
-    max_retries = 5
-    for attempt in range(max_retries):
-        try:
-            r = requests.post(url, headers=headers, json=payload, timeout=180)
-            r.raise_for_status()
-            out.write_bytes(r.content)
-            time.sleep(2)
-            return out
-        except requests.exceptions.HTTPError as e:
-            # Handle 429 rate limits with much longer waits
-            if e.response.status_code == 429:
-                wait_time = (attempt + 1) * 20  # 20, 40, 60, 80, 100 seconds
-                if attempt < max_retries - 1:
-                    print(f"[image] Rate limited! Retry {attempt+1}/{max_retries} (waiting {wait_time}s)")
-                    time.sleep(wait_time)
-                else:
-                    print(f"[image] Failed to generate image {idx+1}: Rate limit exceeded")
-                    raise e
-            else:
-                wait_time = (attempt + 1) * 5
-                if attempt < max_retries - 1:
-                    print(f"[image] HTTP {e.response.status_code}. Retry {attempt+1}/{max_retries} (waiting {wait_time}s)")
-                    time.sleep(wait_time)
-                else:
-                    print(f"[image] Failed to generate image {idx+1}: {e}")
-                    raise e
-        except Exception as e:
-            wait_time = (attempt + 1) * 5
-            if attempt < max_retries - 1:
-                print(f"[image] Retry {attempt+1}/{max_retries} (waiting {wait_time}s)")
-                time.sleep(wait_time)
-            else:
-                print(f"[image] Failed to generate image {idx+1}: {e}")
-                raise e
+    cred = service_account.Credentials.from_service_account_info(
+        json.loads(service_key), scopes=["https://www.googleapis.com/auth/drive.readonly"]
+    )
+    service = build("drive", "v3", credentials=cred)
+    
+    # Get all images from Drive
+    all_files = []
+    page_token = None
+    while True:
+        r = service.files().list(
+            q=f"'{folder_id}' in parents and mimeType contains 'image/'",
+            fields="files(id, name)", pageSize=200, pageToken=page_token
+        ).execute()
+        all_files.extend(r.get("files", []))
+        page_token = r.get("nextPageToken")
+        if not page_token:
+            break
+    
+    # Track used images
+    used_log = IMAGES_DIR / "used_images.json"
+    used = set()
+    if used_log.exists():
+        used = set(json.loads(used_log.read_text()))
+    
+    available = [f for f in all_files if f["name"] not in used]
+    if not available:
+        available = all_files  # Reset if all used
+        used = set()
+    
+    chosen = random.choice(available)
+    used.add(chosen["name"])
+    used_log.write_text(json.dumps(list(used)))
+    
+    print(f"[image] Downloading {chosen['name']} from Drive...", flush=True)
+    request = service.files().get_media(fileId=chosen["id"])
+    from googleapiclient.http import MediaIoBaseDownload
+    import io
+    fh = io.BytesIO()
+    downloader = MediaIoBaseDownload(fh, request)
+    done = False
+    while not done:
+        _, done = downloader.next_chunk()
+    
+    fh.seek(0)
+    out.write_bytes(fh.read())
+    print(f"  Saved: {out.name} ({out.stat().st_size // 1024} KB)", flush=True)
     return out
+
+def generate_image(scene: str, idx: int) -> Path:
+    """Download image from Google Drive instead of AI generation."""
+    return download_image_from_drive(idx)
 
 def generate_images(scenes: list):
     """Generate unique images for each scene SEQUENTIALLY (avoids rate limits)"""
