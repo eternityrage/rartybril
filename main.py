@@ -186,7 +186,9 @@ def download_image_from_drive(idx: int) -> Path:
     out = IMAGES_DIR / f"scene_{idx:02d}.jpg"
     
     service_key = os.environ.get("GOOGLE_SERVICE_ACCOUNT_KEY")
-    folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID", "1WfXSfSYhQUZq3RJO7ZmJo2XfMUt1dHzl")
+    folder_id = os.environ.get("GOOGLE_DRIVE_FOLDER_ID")
+    if not folder_id:
+        raise ValueError("GOOGLE_DRIVE_FOLDER_ID environment variable required")
     
     cred = service_account.Credentials.from_service_account_info(
         json.loads(service_key), scopes=["https://www.googleapis.com/auth/drive.readonly"]

@@ -2,11 +2,11 @@ name: Daily Auto Shorts with Multi-Platform Upload
 
 on:
   schedule:
-    - cron: "30 4 * * *"     # 10:00 AM IST
-    - cron: "0 8 * * *"      # 1:30 PM IST
-    - cron: "30 12 * * *"    # 6:00 PM IST
-    - cron: "0 16 * * *"     # 9:30 PM IST
-    - cron: "30 20 * * *"    # 2:00 AM IST
+    - cron: "0 6 * * *"      # 9:00 AM Greece (UTC+3)
+    - cron: "0 10 * * *"     # 1:00 PM Greece
+    - cron: "0 14 * * *"     # 5:00 PM Greece
+    - cron: "0 18 * * *"     # 9:00 PM Greece
+    - cron: "0 22 * * *"     # 1:00 AM Greece
   workflow_dispatch:
 
 permissions:
@@ -48,7 +48,7 @@ jobs:
         POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY }}
         HF_TOKEN=${{ secrets.HF_TOKEN }}
         GOOGLE_SERVICE_ACCOUNT_KEY=${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-        GOOGLE_DRIVE_FOLDER_ID=1WfXSfSYhQUZq3RJO7ZmJo2XfMUt1dHzl
+        GOOGLE_DRIVE_FOLDER_ID=${{ secrets.GOOGLE_DRIVE_FOLDER_ID }}
         YT_CLIENT_ID=${{ secrets.YT_CLIENT_ID }}
         YT_CLIENT_SECRET=${{ secrets.YT_CLIENT_SECRET }}
         YT_REFRESH_TOKEN=${{ secrets.YT_REFRESH_TOKEN }}
