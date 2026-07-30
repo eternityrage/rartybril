@@ -111,7 +111,7 @@ def generate_story_with_pollinations(topic: str) -> str:
     payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating Greek story for topic: {topic}")
-    r = requests.post(url, headers=headers, json=payload, timeout=60)
+    r = requests.post(url, headers=headers, json=payload, timeout=180)
     r.raise_for_status()
     text = r.json()["choices"][0]["message"]["content"].strip()
     
@@ -136,7 +136,7 @@ def generate_english_story(topic: str) -> str:
     payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating English story for topic: {topic}")
-    r = requests.post(url, headers=headers, json=payload, timeout=60)
+    r = requests.post(url, headers=headers, json=payload, timeout=180)
     r.raise_for_status()
     text = r.json()["choices"][0]["message"]["content"].strip()
     
