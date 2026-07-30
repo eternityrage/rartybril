@@ -111,8 +111,17 @@ def generate_story_with_pollinations(topic: str) -> str:
     payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating Greek story for topic: {topic}")
-    r = requests.post(url, headers=headers, json=payload, timeout=180)
-    r.raise_for_status()
+    for attempt in range(3):
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=180)
+            r.raise_for_status()
+            break
+        except Exception as e:
+            print(f"[story] Attempt {attempt+1} failed: {e}")
+            if attempt < 2:
+                time.sleep((attempt+1)*10)
+            else:
+                raise
     text = r.json()["choices"][0]["message"]["content"].strip()
     
     words = text.split()
@@ -136,8 +145,17 @@ def generate_english_story(topic: str) -> str:
     payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating English story for topic: {topic}")
-    r = requests.post(url, headers=headers, json=payload, timeout=180)
-    r.raise_for_status()
+    for attempt in range(3):
+        try:
+            r = requests.post(url, headers=headers, json=payload, timeout=180)
+            r.raise_for_status()
+            break
+        except Exception as e:
+            print(f"[story] Attempt {attempt+1} failed: {e}")
+            if attempt < 2:
+                time.sleep((attempt+1)*10)
+            else:
+                raise
     text = r.json()["choices"][0]["message"]["content"].strip()
     
     words = text.split()
