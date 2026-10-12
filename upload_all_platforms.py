@@ -297,6 +297,12 @@ def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_fi
             try:
                 t_start = datetime.now()
                 if pname == "youtube":
+                    upload_yt = os.getenv("UPLOAD_YOUTUBE", "true").lower()
+                    if upload_yt in ("false", "0", "no"):
+                        print(f"⏸️ Skipping YouTube upload (UPLOAD_YOUTUBE=false). Other platforms will proceed.")
+                        results["uploads"]["youtube"] = {"status": "skipped", "reason": "UPLOAD_YOUTUBE=false"}
+                        results["platforms_skipped"].append("youtube")
+                        continue
                     from upload_to_youtube import generate_video_metadata
                     yt_title, yt_desc, yt_tags = generate_video_metadata(category, len(phrases) if phrases else 5, phrases)
                     r = func(video_path=video_path, title=yt_title, description=yt_desc, tags=yt_tags, category_id='22')
