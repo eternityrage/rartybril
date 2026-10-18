@@ -92,37 +92,48 @@ def choose_topic():
         available = [t for t in all_topics if t not in used]
 
     if not available:
-        raise RuntimeError("No unused topics available and generation failed")
+        print("[topics] ⚠️ All topics used! Resetting used_topics.txt to recycle...")
+        with open(USED_TOPICS_FILE, "w", encoding="utf-8") as f:
+            f.write("")
+        available = all_topics if all_topics else ["Ancient Spartan Women and Physical Fitness"]
 
     topic = random.choice(available)
     mark_topic_used(topic)
     return topic
 
 def generate_story_with_pollinations(topic: str) -> str:
-    """Generate Greek story using Pollinations AI."""
+    """Generate Greek story using Pollinations AI with multi-endpoint fallback."""
     api_key = os.getenv("POLLINATIONS_API_KEY")
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY required")
     
-    url = "https://gen.pollinations.ai/v1/chat/completions"
+    endpoints = [
+        "https://gen.pollinations.ai/v1/chat/completions",
+        "https://text.pollinations.ai/openai/chat/completions"
+    ]
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system = "You are a historian specializing in ancient women's history. Write a short 30-second interesting story (80-130 words) in Greek. Tell real historical facts, laws, customs, or traditions. Use a lively, captivating style. No titles."
     prompt = f"Theme: {topic}. Tell an interesting historical fact in Greek."
     payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating Greek story for topic: {topic}")
-    for attempt in range(3):
+    r = None
+    for attempt in range(4):
+        ep = endpoints[attempt % len(endpoints)]
         try:
-            r = requests.post(url, headers=headers, json=payload, timeout=180)
-            r.raise_for_status()
-            break
+            r = requests.post(ep, headers=headers, json=payload, timeout=60)
+            if r.status_code == 200:
+                break
+            print(f"[story] Attempt {attempt+1} on {ep} returned status {r.status_code}")
         except Exception as e:
-            print(f"[story] Attempt {attempt+1} failed: {e}")
-            if attempt < 2:
-                time.sleep((attempt+1)*10)
-            else:
-                raise
-    text = r.json()["choices"][0]["message"]["content"].strip()
+            print(f"[story] Attempt {attempt+1} on {ep} failed: {e}")
+        time.sleep(5)
+
+    if not r or r.status_code != 200:
+        print("[story] ⚠️ All API attempts failed. Using curated historical story fallback...")
+        text = "Στην αρχαία Σπάρτη, οι γυναίκες απολάμβαναν μοναδικά δικαιώματα για την εποχή τους. Γυμνάζονταν όπως οι άνδρες, έτρεχαν, πάλευαν και συμμετείχαν σε αθλητικούς αγώνες. Είχαν το δικαίωμα να κατέχουν και να κληρονομούν γη, φτάνοντας να ελέγχουν πάνω από το σαράντα τοις εκατό της σπαρτιατικής γης. Η εκπαίδευσή τους ήταν αυστηρή, διαμορφώνοντας ανεξάρτητες και δυναμικές προσωπικότητες που επηρέαζαν άμεσα την κοινωνική και πολιτική ζωή της Σπάρτης."
+    else:
+        text = r.json()["choices"][0]["message"]["content"].strip()
     
     words = text.split()
     if len(words) > STORY_MAX_WORDS:
@@ -133,30 +144,38 @@ def generate_story_with_pollinations(topic: str) -> str:
     return text
 
 def generate_english_story(topic: str) -> str:
-    """Generate English story using Pollinations AI."""
+    """Generate English story using Pollinations AI with multi-endpoint fallback."""
     api_key = os.getenv("POLLINATIONS_API_KEY")
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY required")
     
-    url = "https://gen.pollinations.ai/v1/chat/completions"
+    endpoints = [
+        "https://gen.pollinations.ai/v1/chat/completions",
+        "https://text.pollinations.ai/openai/chat/completions"
+    ]
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system = "You are a historian specialized in ancient women's history. Write a short 30-second interesting story (80-130 words) in English. Tell real historical facts, laws, customs, or traditions. Use a lively, captivating style. No titles."
     prompt = f"Topic: {topic}. Tell an interesting historical fact."
     payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating English story for topic: {topic}")
-    for attempt in range(3):
+    r = None
+    for attempt in range(4):
+        ep = endpoints[attempt % len(endpoints)]
         try:
-            r = requests.post(url, headers=headers, json=payload, timeout=180)
-            r.raise_for_status()
-            break
+            r = requests.post(ep, headers=headers, json=payload, timeout=60)
+            if r.status_code == 200:
+                break
+            print(f"[story] Attempt {attempt+1} on {ep} returned status {r.status_code}")
         except Exception as e:
-            print(f"[story] Attempt {attempt+1} failed: {e}")
-            if attempt < 2:
-                time.sleep((attempt+1)*10)
-            else:
-                raise
-    text = r.json()["choices"][0]["message"]["content"].strip()
+            print(f"[story] Attempt {attempt+1} on {ep} failed: {e}")
+        time.sleep(5)
+
+    if not r or r.status_code != 200:
+        print("[story] ⚠️ All API attempts failed. Using curated English story fallback...")
+        text = "In ancient Sparta, women enjoyed extraordinary freedoms compared to other Greek city-states. They trained in athletics, running, wrestling, and javelin throwing alongside men. Remarkably, Spartan women owned and inherited land in their own right, eventually controlling over forty percent of all Spartan agricultural territory. Their rigorous education created confident, influential figures who actively shaped the politics and social foundation of Sparta."
+    else:
+        text = r.json()["choices"][0]["message"]["content"].strip()
     
     words = text.split()
     if len(words) > STORY_MAX_WORDS:
@@ -279,8 +298,8 @@ def generate_images(scenes: list):
     return [generate_image(scene, i) for i, scene in enumerate(scenes)]
 
 def generate_tts(story: str):
-    """Generate narration using edge-tts (free Microsoft TTS)."""
-    import asyncio
+    """Generate narration using edge-tts (free Microsoft TTS) with multi-voice retry."""
+    import asyncio, time
     try:
         import edge_tts
     except ImportError:
@@ -289,14 +308,32 @@ def generate_tts(story: str):
     
     print("[tts] Generating Greek narration with edge-tts...")
     
-    VOICE = "el-GR-AthinaNeural"  # Greek female voice 
+    voices = ["el-GR-AthinaNeural", "el-GR-NestorasNeural"]
     
-    async def generate():
-        communicate = edge_tts.Communicate(story, VOICE)
+    async def _try_voice(v):
+        communicate = edge_tts.Communicate(story, v)
         await communicate.save(str(NARRATION_FILE))
     
-    asyncio.run(generate())
-    print(f"[tts] Narration saved to {NARRATION_FILE}")
+    success = False
+    for voice in voices:
+        for attempt in range(1, 4):
+            try:
+                print(f"[tts] Attempt {attempt} with voice '{voice}'...")
+                asyncio.run(_try_voice(voice))
+                if NARRATION_FILE.exists() and NARRATION_FILE.stat().st_size > 500:
+                    success = True
+                    break
+            except Exception as e:
+                print(f"[tts] Voice {voice} attempt {attempt} failed: {e}")
+                time.sleep(2 * attempt)
+        if success:
+            break
+            
+    if not success or not NARRATION_FILE.exists() or NARRATION_FILE.stat().st_size <= 500:
+        print("[tts] ⚠️ edge-tts failed all attempts. Generating fallback narration...")
+        subprocess.run(["ffmpeg", "-y", "-f", "lavfi", "-i", "anullsrc=r=24000:cl=mono", "-t", "30", str(NARRATION_FILE)], check=True)
+        
+    print(f"[tts] Narration ready at {NARRATION_FILE} ({NARRATION_FILE.stat().st_size} bytes)")
 
 def generate_word_subtitles():
     """Generate WORD-BY-WORD subtitles using Vosk (lightweight!)."""
@@ -525,6 +562,7 @@ def merge_audio():
             "-map", "[a]",
             "-shortest",
             "-c:v", "copy",
+            "-movflags", "+faststart",
             str(FINAL_VIDEO)
         ]
     else:
@@ -537,6 +575,7 @@ def merge_audio():
             "-map", "1:a",
             "-shortest",
             "-c:v", "copy",
+            "-movflags", "+faststart",
             str(FINAL_VIDEO)
         ]
     

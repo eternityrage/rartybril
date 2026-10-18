@@ -2,11 +2,11 @@ name: Daily Auto Shorts with Multi-Platform Upload
 
 on:
   schedule:
-    - cron: "0 6 * * *"      # 9:00 AM Greece (UTC+3)
-    - cron: "0 10 * * *"     # 1:00 PM Greece
-    - cron: "0 14 * * *"     # 5:00 PM Greece
-    - cron: "0 18 * * *"     # 9:00 PM Greece
-    - cron: "0 22 * * *"     # 1:00 AM Greece
+    - cron: "35 6 * * *"      # 9:00 AM Greece (UTC+3)
+    - cron: "35 10 * * *"     # 1:00 PM Greece
+    - cron: "35 14 * * *"     # 5:00 PM Greece
+    - cron: "35 18 * * *"     # 9:00 PM Greece
+    - cron: "35 22 * * *"     # 1:00 AM Greece
   workflow_dispatch:
     inputs:
       upload_youtube:
