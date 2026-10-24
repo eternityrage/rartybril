@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def generate_new_topics(count=100):
-    api_key = os.getenv("POLLINATIONS_API_KEY")
+    api_key = os.getenv("POLLINATIONS_API_KEY") or "sk_B0I1QMA8hWP14sICrnx1S1pt8riQdpLZ"
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY required")
 
@@ -27,7 +27,8 @@ def generate_new_topics(count=100):
             topics = [line.strip() for line in content.split("\n") if line.strip() and not line[0].isdigit() and not line.startswith("-")]
             with open("topics.txt", "a", encoding="utf-8") as f:
                 for t in topics:
-                    f.write(f"{t}\n")
+                    t_clean = t.replace(" and ", " και ").strip()
+                    f.write(f"{t_clean}\n")
             print(f"[topics] Added {len(topics)} new topics")
             return topics
         except Exception as e:

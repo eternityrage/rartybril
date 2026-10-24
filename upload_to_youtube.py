@@ -43,13 +43,41 @@ def get_authenticated_service():
     
     return build('youtube', 'v3', credentials=creds)
 
-def upload_to_youtube(video_path, title, description, tags, category_id='22'):
+
+
+def generate_video_metadata(category="Ancient History", phrase_count=5, phrases=None, story=None, story_en=None):
+    """Generate title, description, and tags for YouTube Shorts."""
+    topic_file = Path('output/topic.txt')
+    story_file = Path('output/story.txt')
+    story_en_file = Path('output/story_en.txt')
+    
+    topic = category or (topic_file.read_text(encoding='utf-8').strip() if topic_file.exists() else "")
+    topic = topic.replace(" and ", " και ").strip()
+    gr_text = story or (story_file.read_text(encoding='utf-8').strip() if story_file.exists() else "")
+    en_text = story_en or (story_en_file.read_text(encoding='utf-8').strip() if story_en_file.exists() else "")
+    
+    title = f"{topic[:60]} #Shorts" if topic else "Ancient History #Shorts"
+    
+    desc_lines = []
+    if topic:
+        desc_lines.append(f"Ancient History: {topic}\n")
+    if gr_text:
+        desc_lines.append(gr_text[:300])
+    if en_text:
+        desc_lines.append(f"\n--- English Translation ---\n{en_text[:300]}")
+    desc_lines.append("\n#Shorts #history #ancienthistory #greekhistory #womenshistory #mythology")
+    description = "\n".join(desc_lines)
+    
+    tags = ['shorts', 'history', 'ancient history', 'greek mythology', 'story', 'womenshistory']
+    return title, description, tags
+
+def upload_to_youtube(video_path=None, title='Ancient History', description='', tags=None, category_id='22', video_file=None):
     """Upload video to YouTube and return result."""
     upload_yt = os.getenv("UPLOAD_YOUTUBE", "true").lower()
     if upload_yt in ("false", "0", "no"):
         print("[youtube] ⏸️ Skipping YouTube upload (UPLOAD_YOUTUBE=false). Facebook will continue.")
         return None
-    video_file = video_path
+    video_file = video_path or video_file or Path('output/final_video.mp4')
     youtube = get_authenticated_service()
     
     body = {

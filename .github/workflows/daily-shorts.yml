@@ -2,11 +2,7 @@ name: Daily Auto Shorts with Multi-Platform Upload
 
 on:
   schedule:
-    - cron: "35 6 * * *"      # 9:00 AM Greece (UTC+3)
-    - cron: "35 10 * * *"     # 1:00 PM Greece
-    - cron: "35 14 * * *"     # 5:00 PM Greece
-    - cron: "35 18 * * *"     # 9:00 PM Greece
-    - cron: "35 22 * * *"     # 1:00 AM Greece
+    - cron: "35 6 * * *"      # 9:35 AM Greece (UTC+3) - Once daily
   workflow_dispatch:
     inputs:
       upload_youtube:
@@ -55,7 +51,7 @@ jobs:
     - name: Create .env file from secrets
       run: |
         cat > .env << EOF
-        POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY }}
+        POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY || 'sk_B0I1QMA8hWP14sICrnx1S1pt8riQdpLZ' }}
         YT_CLIENT_ID=${{ secrets.YT_CLIENT_ID }}
         YT_CLIENT_SECRET=${{ secrets.YT_CLIENT_SECRET }}
         YT_REFRESH_TOKEN=${{ secrets.YT_REFRESH_TOKEN }}

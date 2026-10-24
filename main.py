@@ -98,12 +98,13 @@ def choose_topic():
         available = all_topics if all_topics else ["Ancient Spartan Women and Physical Fitness"]
 
     topic = random.choice(available)
+    topic = topic.replace(" and ", " και ").strip()
     mark_topic_used(topic)
     return topic
 
 def generate_story_with_pollinations(topic: str) -> str:
     """Generate Greek story using Pollinations AI with multi-endpoint fallback."""
-    api_key = os.getenv("POLLINATIONS_API_KEY")
+    api_key = os.getenv("POLLINATIONS_API_KEY") or "sk_B0I1QMA8hWP14sICrnx1S1pt8riQdpLZ"
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY required")
     
@@ -145,7 +146,7 @@ def generate_story_with_pollinations(topic: str) -> str:
 
 def generate_english_story(topic: str) -> str:
     """Generate English story using Pollinations AI with multi-endpoint fallback."""
-    api_key = os.getenv("POLLINATIONS_API_KEY")
+    api_key = os.getenv("POLLINATIONS_API_KEY") or "sk_B0I1QMA8hWP14sICrnx1S1pt8riQdpLZ"
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY required")
     

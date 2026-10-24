@@ -222,63 +222,41 @@ def detect_phrase_source(phrases):
     return "ai"
 
 
-def generate_caption(phrases, category, lang_field="native", words=None, metadata=None, platform="facebook"):
-    if metadata and metadata.get("story"):
-        story_gr = metadata.get("story_gr", "")
-        story_en = metadata.get("story", "")
-        topic = metadata.get("topic", "History")
-        tag = "ancienthistory"
-        base = [f"Ancient History: {topic}", ""]
-        if story_gr:
-            base.append(story_gr.strip())
-            base.append("")
-            base.append("--- English Translation ---")
-            base.append("")
-        if story_en:
-            base.append(story_en.strip())
-            base.append("")
-        base.extend(["Like & follow for daily history!", ""])
-        base.extend(["#" + tag, "#history", "#ancienthistory", "#greekhistory", "#womenshistory"])
-        return "\n".join(base)
-    if words:
-        channel = category
-        tag = channel.lower().replace(" ", "")
-        base = [f"{channel.upper()} - Unlock English Vocabulary!", "", f"Today's words:", ""]
-        for i, w in enumerate(words[:3], 1):
-            word = w.get("word", "")
-            root = w.get("root", "")
-            root_m = w.get("root_meaning", "")
-            pos = w.get("part_of_speech", "")
-            definition = w.get("definition", "")
-            example = w.get("example", "")
-            base.append(f"{i}. {word.upper()} ({pos})")
-            base.append(f"   {definition}")
-            if root and root_m:
-                base.append(f"   Root: {root} = {root_m}")
-            base.append(f"   \"{example}\"")
-            base.append("")
-        base.extend(["Like & follow for daily vocabulary!", ""])
-        base.extend([f"#{tag}", f"#{tag}daily", "#vocabulary", "#englishlearning", "#wordroots", "#learnenglish"])
-        return "\n".join(base)
-    lang_name = get_language_name(phrases, lang_field)
-    lang_tag = lang_name.lower().replace(" ", "")
-    if platform == "instagram":
-        base = [f"Learn {lang_name} with VELOCITY {lang_name.upper()}!", "", f"Category: {category}", ""]
-        for i, p in enumerate(phrases[:3], 1):
-            base.append(f"{i}. {p['english']}")
-            base.append(f"   {p.get(lang_field, '')}")
-            base.append("")
-        base.extend(["Which phrase is your favorite? 👇", f"Follow for daily {lang_name} lessons!", ""])
-        base.extend([f"#learn{lang_tag}", f"#{lang_tag}lessons", "#languagelearning", f"#velocity{lang_tag}", f"#daily{lang_tag}"])
-        return "\n".join(base)
-    base = [f"Learn {lang_name} with VELOCITY {lang_name.upper()}!", "", f"Category: {category}", "", f"Master {lang_name} one phrase at a time! Today's {category} lesson:", ""]
-    for i, p in enumerate(phrases[:5], 1):
-        base.append(f"{i}. {p['english']}")
-        base.append(f"   {p.get(lang_field, '')}")
-        base.append(f"   [{p.get('transliteration', '')}]")
+def generate_caption(phrases=None, category=None, lang_field="native", words=None, metadata=None, platform="facebook"):
+    meta = metadata or {}
+    topic = meta.get("topic") or category or "Ancient History"
+    topic = str(topic).replace(" and ", " και ").strip()
+    story_gr = meta.get("story_gr", "")
+    story_en = meta.get("story", "")
+    
+    # Fallback to output files if empty in meta
+    if not story_gr:
+        sg = Path("output/story.txt")
+        if sg.exists():
+            try: story_gr = sg.read_text(encoding="utf-8").strip()
+            except Exception: pass
+    if not story_en:
+        se = Path("output/story_en.txt")
+        if se.exists():
+            try: story_en = se.read_text(encoding="utf-8").strip()
+            except Exception: pass
+    if not topic or topic in ("Daily Story", "Learning"):
+        tp = Path("output/topic.txt")
+        if tp.exists():
+            try: topic = tp.read_text(encoding="utf-8").replace(" and ", " και ").strip() or topic
+            except Exception: pass
+            
+    base = [f"Ancient History: {topic}", ""]
+    if story_gr:
+        base.append(story_gr.strip())
         base.append("")
-    base.extend(["Tip: Repeat each phrase out loud 3 times!", "Like this video if you learned something new!", "Comment your favorite phrase below!", "Follow for daily lessons!", ""])
-    base.extend([f"#learn{lang_tag}", f"#{lang_tag}lessons", f"#{lang_tag}forbeginners", "#languagelearning", f"#{lang_tag}vocabulary", f"#velocity{lang_tag}", f"#daily{lang_tag}", f"#{lang_tag}", "#learnlanguages"])
+    if story_en:
+        base.append("--- English Translation ---")
+        base.append("")
+        base.append(story_en.strip())
+        base.append("")
+    base.extend(["Like & follow for daily history!", ""])
+    base.extend(["#ancienthistory", "#history", "#greekhistory", "#womenshistory", "#mythology", "#ancientgreece"])
     return "\n".join(base)
 
 
@@ -303,8 +281,15 @@ def upload_to_all_platforms(video_path, caption, category, phrases=None, lang_fi
                         results["uploads"]["youtube"] = {"status": "skipped", "reason": "UPLOAD_YOUTUBE=false"}
                         results["platforms_skipped"].append("youtube")
                         continue
-                    from upload_to_youtube import generate_video_metadata
-                    yt_title, yt_desc, yt_tags = generate_video_metadata(category, len(phrases) if phrases else 5, phrases)
+                    try:
+                        from upload_to_youtube import generate_video_metadata
+                        yt_title, yt_desc, yt_tags = generate_video_metadata(category, len(phrases) if phrases else 5, phrases, metadata.get("story_gr") if metadata else None, metadata.get("story") if metadata else None)
+                    except Exception as e:
+                        print(f"[youtube] metadata error ({e}), using default metadata")
+                        clean_cat = str(category).replace(" and ", " και ").strip()
+                        yt_title = f"{clean_cat[:60]} #Shorts"
+                        yt_desc = f"{caption}\n\n#Shorts"
+                        yt_tags = ['shorts', 'history', 'ancient history', 'womenshistory']
                     r = func(video_path=video_path, title=yt_title, description=yt_desc, tags=yt_tags, category_id='22')
                 elif pname == "vk":
                     r = func(video_path=video_path, description=caption)
