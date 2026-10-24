@@ -311,8 +311,14 @@ def generate_tts(story: str):
     
     voices = ["el-GR-AthinaNeural", "el-GR-NestorasNeural"]
     
+    # Clean text to remove any symbols, brackets, or URLs
+    clean_text = re.sub(r'https?://\S+', '', story)
+    clean_text = re.sub(r'[*_#\[\]\(\)<>]', '', clean_text)
+    clean_text = clean_text.replace('&', 'και')
+    clean_text = " ".join(clean_text.split())
+    
     async def _try_voice(v):
-        communicate = edge_tts.Communicate(story, v)
+        communicate = edge_tts.Communicate(clean_text, v, rate="-8%")
         await communicate.save(str(NARRATION_FILE))
     
     success = False
