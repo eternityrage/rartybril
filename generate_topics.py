@@ -15,7 +15,7 @@ def generate_new_topics(count=100):
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system = "You are a historian specializing in ancient women's history. Create unique Greek-language topics about women in ancient civilizations worldwide (Greece, Rome, Egypt, Persia, India, China, Maya, etc.). Each topic short (5-10 words). Output ONLY the topics, one per line."
     prompt = f"Create {count} unique Greek-language topics about women in ancient civilizations:"
-    payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
+    payload = {"model": "openai/gpt-5.4-nano", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
 
     print(f"[topics] Generating {count} new Greek topics...")
     max_retries = 3

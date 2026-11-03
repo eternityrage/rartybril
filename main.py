@@ -115,7 +115,7 @@ def generate_story_with_pollinations(topic: str) -> str:
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system = "You are a historian specializing in ancient women's history. Write a short 30-second interesting story (80-130 words) in Greek. Tell real historical facts, laws, customs, or traditions. Use a lively, captivating style. No titles."
     prompt = f"Theme: {topic}. Tell an interesting historical fact in Greek."
-    payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
+    payload = {"model": "openai/gpt-5.4-nano", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating Greek story for topic: {topic}")
     r = None
@@ -157,7 +157,7 @@ def generate_english_story(topic: str) -> str:
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
     system = "You are a historian specialized in ancient women's history. Write a short 30-second interesting story (80-130 words) in English. Tell real historical facts, laws, customs, or traditions. Use a lively, captivating style. No titles."
     prompt = f"Topic: {topic}. Tell an interesting historical fact."
-    payload = {"model": "openai", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
+    payload = {"model": "openai/gpt-5.4-nano", "messages": [{"role": "system", "content": system}, {"role": "user", "content": prompt}], "temperature": 0.8}
     
     print(f"[story] Generating English story for topic: {topic}")
     r = None
