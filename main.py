@@ -104,7 +104,7 @@ def choose_topic():
 
 def generate_story_with_pollinations(topic: str) -> str:
     """Generate Greek story using Pollinations AI with multi-endpoint fallback."""
-    api_key = os.getenv("POLLINATIONS_API_KEY") or "sk_B0I1QMA8hWP14sICrnx1S1pt8riQdpLZ"
+    api_key = os.getenv("POLLINATIONS_API_KEY")
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY required")
     
@@ -146,7 +146,7 @@ def generate_story_with_pollinations(topic: str) -> str:
 
 def generate_english_story(topic: str) -> str:
     """Generate English story using Pollinations AI with multi-endpoint fallback."""
-    api_key = os.getenv("POLLINATIONS_API_KEY") or "sk_B0I1QMA8hWP14sICrnx1S1pt8riQdpLZ"
+    api_key = os.getenv("POLLINATIONS_API_KEY")
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY required")
     

@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def generate_new_topics(count=100):
-    api_key = os.getenv("POLLINATIONS_API_KEY") or "sk_B0I1QMA8hWP14sICrnx1S1pt8riQdpLZ"
+    api_key = os.getenv("POLLINATIONS_API_KEY")
     if not api_key:
         raise ValueError("POLLINATIONS_API_KEY required")
 

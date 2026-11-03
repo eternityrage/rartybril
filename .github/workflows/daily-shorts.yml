@@ -51,7 +51,7 @@ jobs:
     - name: Create .env file from secrets
       run: |
         cat > .env << EOF
-        POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY || 'sk_B0I1QMA8hWP14sICrnx1S1pt8riQdpLZ' }}
+        POLLINATIONS_API_KEY=${{ secrets.POLLINATIONS_API_KEY }}
         YT_CLIENT_ID=${{ secrets.YT_CLIENT_ID }}
         YT_CLIENT_SECRET=${{ secrets.YT_CLIENT_SECRET }}
         YT_REFRESH_TOKEN=${{ secrets.YT_REFRESH_TOKEN }}
